@@ -222,12 +222,14 @@
 			var extraspacing = 8;
 			var spacespacing = 9;
 
-			var tokens = text.match(/\S+|\s+/g) || [];
+			var lines = text.split("\n");
 			var line = "";
 			var currentY = y;
 
 			function measureLine(str)
 			{
+				str = str.replace(/\s+$/, "");
+
 				var w = 0;
 
 				for (var i = 0; i < str.length; i++)
@@ -237,13 +239,11 @@
 					if (i < str.length - 1)
 						w += letterSpacing;
 
-					
 					if (str[i] === "'" || str[i] === "," || str[i] === "." || str[i] === "!" || str[i] === "?")
 						w += extraspacing;
 
-					if (str[i] === " ") 
+					if (str[i] === " ")
 						w += spacespacing;
-		
 				}
 
 				return w;
@@ -275,42 +275,56 @@
 				}
 			}
 
-			for (var i = 0; i < tokens.length; i++)
+			for (var l = 0; l < lines.length; l++)
 			{
-				var token = tokens[i];
+				var tokens = lines[l].match(/\S+|\s+/g) || [];
+				var line = "";
 
-				if (token === "")
-					continue;
-
-				var testLine = line + token;
-
-				if (measureLine(testLine) > width && line !== "")
+				for (var i = 0; i < tokens.length; i++)
 				{
-					drawLine(line, x, currentY);
-					line = "";
-					currentY += lineHeight;
-				}
+					var token = tokens[i];
 
-				if (measureLine(token) > width)
-				{
-					for (var j = 0; j < token.length; j++)
+					if (token === "")
+						continue;
+
+					var testLine = line + token;
+
+					if (measureLine(testLine) > width && line !== "")
 					{
-						var test = line + token[j];
+						line = line.replace(/\s+$/, "");
+						drawLine(line, x, currentY);
 
-						if (measureLine(test) > width && line !== "")
+						line = token.replace(/^\s+/, "");
+						currentY += lineHeight;
+						continue;
+					}
+
+					if (measureLine(token) > width)
+					{
+						for (var j = 0; j < token.length; j++)
 						{
-							drawLine(line, x, currentY);
-							line = "";
-							currentY += lineHeight;
-						}
+							var test = line + token[j];
 
-						line += token[j];
+							if (measureLine(test) > width && line !== "")
+							{
+								drawLine(line, x, currentY);
+								line = "";
+								currentY += lineHeight;
+							}
+
+							line += token[j];
+						}
+					}
+					else
+					{
+						line += token;
 					}
 				}
-				else
-				{
-					line += token;
-				}
+
+				if (line !== "")
+					drawLine(line, x, currentY);
+
+				currentY += lineHeight;
 			}
 
 			if (line !== "")
