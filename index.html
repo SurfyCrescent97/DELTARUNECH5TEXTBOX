@@ -193,13 +193,7 @@
 			{
 				if (path instanceof Image)
 				{
-					ctx.drawImage(
-						path,
-						x - originx * xscale,
-						y - originy * yscale,
-						path.width * xscale,
-						path.height * yscale
-					);
+					ctx.drawImage(path, x - originx * xscale, y - originy * yscale, path.width * xscale, path.height * yscale);
 
 					resolve();
 					return;
@@ -209,13 +203,7 @@
 
 				image.onload = function()
 				{
-					ctx.drawImage(
-						image,
-						x - originx * xscale,
-						y - originy * yscale,
-						image.width * xscale,
-						image.height * yscale
-					);
+					ctx.drawImage(image, x - originx * xscale, y - originy * yscale, image.width * xscale, image.height * yscale);
 
 					resolve();
 				};
@@ -333,6 +321,7 @@
 		{
 			var canvas = document.getElementById("textbox");
 			var ctx = canvas.getContext("2d");
+			ctx.imageSmoothingEnabled = false;
 
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 			
