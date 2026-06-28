@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	<link rel="preload" href="Assets/Fonts/8bitoperator-JVE.woff2" as="font" type="font/woff2" crossorigin>
+		
+	</head>
+	<style>
+		@font-face {
+			font-family: "MAINFONT";
+			src: url("Assets/Fonts/8bitoperator-JVE.woff2");
+		}
+
+		body
+		{
+			margin: 0;
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 24px;
+			box-sizing: border-box;
+			background: #1f1f1f;
+			background-image: url("Assets/Images/background.png");
+			background-repeat: repeat;
+			background-size: auto;
+			background-position: top left;
+			font-family: "MAINFONT", Arial, sans-serif;
+			color: #f7f2e8;
+		}
+
+		#editor
+		{
+			width: min(700px, 100%);
+			margin: 0;
+			padding: 24px 28px;
+			background: rgba(33, 33, 33, 0.86);
+			border: 1px solid rgba(255, 255, 255, 0.15);
+			border-radius: 14px;
+			box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+			backdrop-filter: blur(4px);
+			text-align: center;
+		}
+
+		#speaker,
+		textarea,
+		button,
+		input
+		{
+			font-family: "MAINFONT", Arial, sans-serif;
+			color: #f7f2e8;
+			background: #2e2e2e;
+			border: 1px solid #6d674f;
+			border-radius: 8px;
+		}
+
+		#speaker
+		{
+			width: 220px;
+			font-size: 18px;
+			padding: 8px 10px;
+		}
+
+		textarea
+		{
+			width: min(100%, 560px);
+			padding: 10px;
+			resize: vertical;
+		}
+
+		label
+		{
+			display: inline-block;
+			color: #f7f2e8;
+		}
+
+		canvas
+		{
+			border: 1px solid rgba(255, 255, 255, 0.18);
+			border-radius: 8px;
+			box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+			background: rgba(0, 0, 0, 0.12);
+		}
+	</style>
+	<body>
+
+	<div id="editor">
+		<center>
+			<select id="speaker">
+				<option value="aqua">Aqua</option>
+				<option value="seth">Seth</option>
+				<option value="yellow">Yellow</option>
+				<option value="orange">Orange</option>
+				<option value="blue">Blue</option>
+				<option value="green">Green</option>
+				<option value="custom">Custom</option>
+			</select>
+
+			<br><br>
+
+			<div id="customcontrols" style="display:none;">
+				<label>
+					Color:
+					<input type="color" id="customcolor" value="#84F9FF">
+				</label>
+
+				<br>
+				<br>
+
+				<label>
+					Icon:
+					<input type="file" id="customicon" accept="image/*">
+				</label>
+
+				<br>
+				<br>
+			</div>
+
+			<label>
+				Text:
+				<br>
+				<textarea id="textboxtext" rows="4" cols="60" placeholder="Type text here..."></textarea>
+			</label>
+
+			<br>
+			<br>
+
+			<button id="generatebutton" onclick="generate()">Generate</button>
+
+
+			<br>
+			<br>
+
+			<canvas id="textbox" width="594" height="168"></canvas>
+		</center>
+	</div>
+
+	</body>
+	<script>
+
+		async function get_custom_icon()
+		{
+			var file = document.getElementById("customicon").files[0];
+
+			if (!file)
+				return null;
+
+			return new Promise(function(resolve)
+			{
+				var img = new Image();
+
+				img.onload = function()
+				{
+					var canvas = document.createElement("canvas");
+					canvas.width = 20;
+					canvas.height = 20;
+
+					var ctx = canvas.getContext("2d");
+					ctx.imageSmoothingEnabled = true;
+					ctx.drawImage(img, 0, 0, 20, 20);
+
+					var result = new Image();
+
+					result.onload = function()
+					{
+						URL.revokeObjectURL(img.src);
+						resolve(result);
+					};
+
+					result.src = canvas.toDataURL("image/png");
+				};
+
+				img.src = URL.createObjectURL(file);
+			});
+		}
+
+		function textcolor(speaker)
+		{
+			var colors = {
+				aqua: "#84F9FF",
+				seth: "#E2A8FC",
+				yellow: "#FFF8A1",
+				orange: "#FFAC87",
+				blue: "#86A7FF",
+				green: "#AEFFBC"
+			};
+
+			return colors[speaker] || "#FFFFFF";
+		}
+		
+		function draw_image(ctx, path, x, y, xscale = 1, yscale = 1, originx = 0, originy = 0)
+		{
+			return new Promise(function(resolve)
+			{
+				if (path instanceof Image)
+				{
+					ctx.drawImage(
+						path,
+						x - originx * xscale,
+						y - originy * yscale,
+						path.width * xscale,
+						path.height * yscale
+					);
+
+					resolve();
+					return;
+				}
+
+				var image = new Image();
+
+				image.onload = function()
+				{
+					ctx.drawImage(
+						image,
+						x - originx * xscale,
+						y - originy * yscale,
+						image.width * xscale,
+						image.height * yscale
+					);
+
+					resolve();
+				};
+
+				image.src = path;
+			});
+		}
+
+		function draw_text(ctx, text, x, y, width, col)
+		{
+			ctx.font = "32px MAINFONT";
+			ctx.fillStyle = col;
+
+			var lineHeight = 36;
+			var letterSpacing = 2; 
+			var extraspacing = 8;
+			var spacespacing = 9;
+
+			var tokens = text.match(/\S+|\s+/g) || [];
+			var line = "";
+			var currentY = y;
+
+			function measureLine(str)
+			{
+				var w = 0;
+
+				for (var i = 0; i < str.length; i++)
+				{
+					w += ctx.measureText(str[i]).width;
+
+					if (i < str.length - 1)
+						w += letterSpacing;
+
+					
+					if (str[i] === "'" || str[i] === "," || str[i] === "." || str[i] === "!" || str[i] === "?")
+						w += extraspacing;
+
+					if (str[i] === " ") 
+						w += spacespacing;
+		
+				}
+
+				return w;
+			}
+
+			function drawLine(str, drawX, drawY)
+			{
+				var currentX = drawX;
+
+				for (var i = 0; i < str.length; i++)
+				{
+					var ch = str[i];
+
+					var grad = ctx.createLinearGradient(currentX, drawY - 30, currentX, drawY);
+
+					grad.addColorStop(0.0, "#FFFFFF");
+					grad.addColorStop(1.0, col);   
+
+					ctx.fillStyle = grad;
+					ctx.fillText(ch, currentX, drawY);
+
+					currentX += ctx.measureText(ch).width + letterSpacing;
+
+					if (ch === "'" || ch === "," || ch === "." || ch === "!" || ch === "?")
+						currentX += extraspacing;
+
+					if (ch === " ")
+						currentX += spacespacing;
+				}
+			}
+
+			for (var i = 0; i < tokens.length; i++)
+			{
+				var token = tokens[i];
+
+				if (token === "")
+					continue;
+
+				var testLine = line + token;
+
+				if (measureLine(testLine) > width && line !== "")
+				{
+					drawLine(line, x, currentY);
+					line = "";
+					currentY += lineHeight;
+				}
+
+				if (measureLine(token) > width)
+				{
+					for (var j = 0; j < token.length; j++)
+					{
+						var test = line + token[j];
+
+						if (measureLine(test) > width && line !== "")
+						{
+							drawLine(line, x, currentY);
+							line = "";
+							currentY += lineHeight;
+						}
+
+						line += token[j];
+					}
+				}
+				else
+				{
+					line += token;
+				}
+			}
+
+			if (line !== "")
+				drawLine(line, x, currentY);
+		}
+
+		async function rendertextbox(speaker = "none", text="")
+		{
+			var canvas = document.getElementById("textbox");
+			var ctx = canvas.getContext("2d");
+
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			
+			await draw_image(ctx, "Assets/Images/textbox.png", 0, 0, 1, 1, 0, 0);
+
+			if (speaker == "custom")
+			{
+				var icon = await get_custom_icon();
+				var speakerasset = icon;
+				var speakercol = document.getElementById("customcolor").value;
+			}
+			else
+			{
+				var speakerasset = `Assets/Images/miniface/${speaker}.png`
+				var speakercol = textcolor(speaker);
+			}
+
+			
+			if (speaker != "none" || speakerasset == null)
+				await draw_image(ctx, speakerasset, 26, 24, 2, 2, 0);
+			draw_text(ctx, text, 98, 54, 474.45, speakercol, 2);
+		}
+		
+		var speakerSelect = document.getElementById("speaker");
+		var customControls = document.getElementById("customcontrols");
+
+		speakerSelect.addEventListener("change", function()
+		{
+			customControls.style.display = this.value === "custom" ? "block" : "none";
+		});
+		
+		rendertextbox();
+
+		function generate()
+		{
+			var speaker = document.getElementById("speaker").value;
+			var text = document.getElementById("textboxtext").value;
+			rendertextbox(speaker, text);
+		}
+	</script>
+</html>
