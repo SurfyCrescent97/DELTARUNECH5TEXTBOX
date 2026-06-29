@@ -5,40 +5,100 @@
 		
 	</head>
 	<style>
-		@font-face {
+		@font-face
+		{
 			font-family: "MAINFONT";
-			src: url("Assets/Fonts/8bitoperator-JVE.woff2");
+			src: url("Assets/Fonts/8bitoperator-JVE.woff2") format("woff2");
+			font-display: swap;
 		}
 
 		body
 		{
 			margin: 0;
 			min-height: 100vh;
+
 			display: flex;
-			align-items: center;
 			justify-content: center;
+			align-items: center;
+
 			padding: 24px;
 			box-sizing: border-box;
-			background: #1f1f1f;
+
+			background-color: #1f1f1f;
 			background-image: url("Assets/Images/background.png");
 			background-repeat: repeat;
-			background-size: auto;
 			background-position: top left;
+
+			image-rendering: pixelated;
+
 			font-family: "MAINFONT", Arial, sans-serif;
 			color: #f7f2e8;
 		}
 
-		#editor
+		#layout
+		{
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+
+			gap: 12px;
+			width: 100%;
+		}
+
+		.panel
 		{
 			width: min(700px, 100%);
 			margin: 0;
-			padding: 24px 28px;
+
+			padding: 18px;
+
 			background: rgba(33, 33, 33, 0.86);
 			border: 1px solid rgba(255, 255, 255, 0.15);
 			border-radius: 14px;
-			box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+
+			box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
 			backdrop-filter: blur(4px);
+
 			text-align: center;
+		}
+
+		#bannerbox
+		{
+			height: 90px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+
+			background-image: url("Assets/Images/banner.png");
+			background-size: cover;
+			background-position: center;
+
+			position: relative;
+			overflow: hidden;
+		}
+
+		#bannerbox::before
+		{
+			content: "";
+			position: absolute;
+			inset: 0;
+
+			background-image: url("Assets/Images/banner.png");
+			background-size: cover;
+			background-position: center;
+
+			filter: blur(8px) brightness(0.6);
+			transform: scale(1.1);
+		}
+
+		#bannertext
+		{
+			position: relative;
+			z-index: 1;
+
+			font-size: 28px;
+			color: #fff;
+			text-shadow: 2px 2px 0 black;
 		}
 
 		#speaker,
@@ -47,10 +107,26 @@
 		input
 		{
 			font-family: "MAINFONT", Arial, sans-serif;
+
 			color: #f7f2e8;
 			background: #2e2e2e;
+
 			border: 1px solid #6d674f;
 			border-radius: 8px;
+
+			outline: none;
+		}
+
+		button
+		{
+			padding: 8px 14px;
+			cursor: pointer;
+			transition: 0.1s ease-in-out;
+		}
+
+		button:hover
+		{
+			background: #3a3a3a;
 		}
 
 		#speaker
@@ -75,16 +151,35 @@
 
 		canvas
 		{
+			display: block;
+			margin: 0 auto;
+
 			border: 1px solid rgba(255, 255, 255, 0.18);
 			border-radius: 8px;
+
 			box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
 			background: rgba(0, 0, 0, 0.12);
+
+			image-rendering: pixelated;
+		}
+
+		#footerbox
+		{
+			font-size: 14px;
+			opacity: 0.85;
 		}
 	</style>
 	<body>
 
 	<div id="editor">
 		<center>
+
+		<div id="bannerbox" class="panel">
+			<div id="bannertext"><h1>Surfy's DELTARUNE Chapter 5 Textbox Generator</h1></div>
+		</div>
+		<br>
+		<div id="editorbox" class="panel">
+
 			<select id="speaker">
 				<option value="aqua">Aqua</option>
 				<option value="seth">Seth</option>
@@ -98,40 +193,32 @@
 			<br><br>
 
 			<div id="customcontrols" style="display:none;">
-				<label>
-					Color:
-					<input type="color" id="customcolor" value="#84F9FF">
-				</label>
-
-				<br>
-				<br>
-
-				<label>
-					Icon:
-					<input type="file" id="customicon" accept="image/*">
-				</label>
-
-				<br>
-				<br>
+				<label>Color: <input type="color" id="customcolor"></label>
+				<br><br>
+				<label>Icon: <input type="file" id="customicon"></label>
+				<br><br>
 			</div>
 
 			<label>
 				Text:
 				<br>
-				<textarea id="textboxtext" rows="4" cols="60" placeholder="Type text here..."></textarea>
+				<textarea id="textboxtext" rows="4" cols="60"></textarea>
 			</label>
 
-			<br>
-			<br>
+			<br><br>
 
 			<button id="generatebutton" onclick="generate()">Generate</button>
 
-
-			<br>
-			<br>
+			<br><br>
 
 			<canvas id="textbox" width="594" height="168"></canvas>
-		</center>
+
+		</div>
+		<br>
+		<div id="footerbox" class="panel">
+		</div>
+
+		</center>	
 	</div>
 
 	</body>
@@ -215,16 +302,11 @@
 		function draw_text(ctx, text, x, y, width, col)
 		{
 			ctx.font = "32px MAINFONT";
-			ctx.fillStyle = col;
 
 			var lineHeight = 36;
-			var letterSpacing = 2; 
+			var letterSpacing = 2;
 			var extraspacing = 8;
 			var spacespacing = 9;
-
-			var lines = text.split("\n");
-			var line = "";
-			var currentY = y;
 
 			function measureLine(str)
 			{
@@ -258,9 +340,8 @@
 					var ch = str[i];
 
 					var grad = ctx.createLinearGradient(currentX, drawY - 30, currentX, drawY);
-
 					grad.addColorStop(0.0, "#FFFFFF");
-					grad.addColorStop(1.0, col);   
+					grad.addColorStop(1.0, col);
 
 					ctx.fillStyle = grad;
 					ctx.fillText(ch, currentX, drawY);
@@ -274,6 +355,9 @@
 						currentX += spacespacing;
 				}
 			}
+
+			var lines = text.split("\n");
+			var currentY = y;
 
 			for (var l = 0; l < lines.length; l++)
 			{
@@ -291,11 +375,9 @@
 
 					if (measureLine(testLine) > width && line !== "")
 					{
-						line = line.replace(/\s+$/, "");
-						drawLine(line, x, currentY);
-
-						line = token.replace(/^\s+/, "");
+						drawLine(line.replace(/\s+$/, ""), x, currentY);
 						currentY += lineHeight;
+						line = token.replace(/^\s+/, "");
 						continue;
 					}
 
@@ -308,8 +390,8 @@
 							if (measureLine(test) > width && line !== "")
 							{
 								drawLine(line, x, currentY);
-								line = "";
 								currentY += lineHeight;
+								line = "";
 							}
 
 							line += token[j];
@@ -322,13 +404,11 @@
 				}
 
 				if (line !== "")
+				{
 					drawLine(line, x, currentY);
-
-				currentY += lineHeight;
+					currentY += lineHeight;
+				}
 			}
-
-			if (line !== "")
-				drawLine(line, x, currentY);
 		}
 
 		async function rendertextbox(speaker = "none", text="")
