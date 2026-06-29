@@ -3,8 +3,7 @@
 	<head>
 		<link rel="preload" href="Assets/Fonts/8bitoperator-JVE.woff2" as="font" type="font/woff2" crossorigin>
 		<link rel="icon" type="image/png" href="Assets/Images/icon.png">
-		<title>Surfy's DELTARUNE Chapter 5 Textbox Generator</title>
-		
+		<title>Surfy's DELTARUNE Chapter 5 Textbox Generator</title>		
 	</head>
 	<style>
 		@font-face
@@ -182,13 +181,17 @@
 		<div id="editorbox" class="panel">
 
 			<select id="speaker">
-				<option value="aqua">Aqua</option>
-				<option value="seth">Seth</option>
-				<option value="yellow">Yellow</option>
-				<option value="orange">Orange</option>
-				<option value="blue">Blue</option>
-				<option value="green">Green</option>
-				<option value="custom">Custom</option>
+				<optgroup label="Flowers">
+					<option value="aqua">Aqua</option>
+					<option value="seth">Seth</option>
+					<option value="yellow">Yellow</option>
+					<option value="orange">Orange</option>
+					<option value="blue">Blue</option>
+					<option value="green">Green</option>
+				</optgroup>
+				<optgroup label="Misc.">
+					<option value="custom">Custom</option>
+				</optgroup>
 			</select>
 
 			<br><br>
@@ -198,6 +201,7 @@
 					Color mode:
 					<select id="colormode">
 						<option value="solid">Solid</option>
+						<option value="rainbow">Rainbow</option>
 					</select>
 				</label>
 				<label id="solidcolorwrap">
@@ -224,6 +228,8 @@
 			<br>
 			<br>
 			<canvas id="textbox" width="594" height="168"></canvas>
+			<br>
+			<button onclick="downloadPNG()">Download PNG</button>
 		</div>
 		<br>
 		<div id="footerbox" class="panel">
@@ -239,6 +245,26 @@
 
 	</body>
 	<script>
+		var rainbow = [
+			"#FF8A8A", 
+			"#FFAC87", 
+			"#FFF8A1", 
+			"#AEFFBC", 
+			"#84F9FF", 
+			"#86A7FF", 
+			"#C8A2FF", 
+			"#E2A8FC" 
+		];
+
+		function downloadPNG()
+		{
+			var canvas = document.getElementById("textbox");
+
+			var link = document.createElement("a");
+			link.download = "Surfy's DELTARUNE textbox.png";
+			link.href = canvas.toDataURL("image/png");
+			link.click();
+		}
 
 		async function get_custom_icon()
 		{
@@ -353,11 +379,18 @@
 
 				for (var i = 0; i < str.length; i++)
 				{
+					var speakerSelect = document.getElementById("speaker");
 					var ch = str[i];
 
 					var grad = ctx.createLinearGradient(currentX, drawY - 30, currentX, drawY);
 					grad.addColorStop(0.0, "#FFFFFF");
-					grad.addColorStop(1.0, col);
+
+					var colorMode = document.getElementById("colormode");
+
+					if (colorMode.value == "rainbow" && speakerSelect.value == "custom")
+    					grad.addColorStop(1.0, rainbow[i % rainbow.length]);
+					else
+						grad.addColorStop(1.0, col);
 
 					ctx.fillStyle = grad;
 					ctx.fillText(ch, currentX, drawY);
