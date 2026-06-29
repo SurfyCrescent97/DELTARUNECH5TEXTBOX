@@ -284,30 +284,6 @@
 	</div>
 
 	</body>
-	<script>
-		(function ()
-		{
-			var originalGetContext = HTMLCanvasElement.prototype.getContext;
-
-			if (!originalGetContext)
-				return;
-
-			HTMLCanvasElement.prototype.getContext = function(type, options)
-			{
-				if (type === "2d")
-				{
-					var settings = options ? Object.assign({}, options) : {};
-
-					if (settings.willReadFrequently === undefined)
-						settings.willReadFrequently = true;
-
-					return originalGetContext.call(this, type, settings);
-				}
-
-				return originalGetContext.call(this, type, options);
-			};
-		})();
-	</script>
 	<script src="Scripts/gif.js"></script>
 	<script>
 		var rainbow = [
@@ -323,9 +299,8 @@
 
 		var frames = [];
 		var previewImage = document.getElementById("previewimage");
-		var canvas = document.getElementById("textbox");
-		var ctx = canvas.getContext("2d", { willReadFrequently: true });
 
+		
 		var animatedspeedInput = document.getElementById("animatedspeed");
 		var animatedrestartDelayInput = document.getElementById("animatedrestartdelay");
 
@@ -374,7 +349,9 @@
 					canvas.width = 20;
 					canvas.height = 20;
 
-					var ctx = canvas.getContext("2d", { willReadFrequently: true });
+					var ctx = canvas.getContext("2d", {
+						willReadFrequently: true
+					});
 
 					ctx.imageSmoothingEnabled = true;
 					ctx.drawImage(img, 0, 0, 20, 20);
@@ -576,6 +553,8 @@
 
 		async function rendertextbox(speaker = "none", text = "")
 		{
+			var canvas = document.getElementById("textbox");
+			var ctx = canvas.getContext("2d", { willReadFrequently: true });
 			ctx.imageSmoothingEnabled = false;
 
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -608,9 +587,12 @@
 			};
 		}
 
-		function add_frame()
+		async function add_frame()
 		{
-			frames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+			var canvas = document.getElementById("textbox");
+			frames.push(canvas.toDataURL("image/png"));
+
+			var ctx = canvas.getContext("2d", { willReadFrequently: true });
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 		}
 
@@ -621,24 +603,19 @@
 
 		async function generate_frames()
 		{
+			var canvas = document.getElementById("textbox");
 			var currentFrame = canvas.toDataURL("image/png");
-			var selectedFrames = frames.length > 0 ? frames : [];
-
-			if (selectedFrames.length <= 0)
-			{
-				set_preview_image(currentFrame);
-				return;
-			}
+			var selectedFrames = frames.length > 0 ? frames : [currentFrame];
 
 			if (selectedFrames.length <= 1)
 			{
-				set_preview_image(currentFrame);
+				set_preview_image(selectedFrames[0]);
 				return;
 			}
 
 			if (typeof window.GIF === "undefined")
 			{
-				set_preview_image(currentFrame);
+				set_preview_image(selectedFrames[0]);
 				return;
 			}
 
@@ -649,12 +626,19 @@
 				height: canvas.height,
 				workerScript: window.location.origin + "/Scripts/gif.worker.js"
 			});
-
-			var lastFrame = selectedFrames[selectedFrames.length - 1];
+			
+			var lastFrame = new Image();
+			lastFrame.src  = selectedFrames[selectedFrames.length - 1];
 
 			for (var i = 0; i < selectedFrames.length; i++)
 			{
-				gif.addFrame(selectedFrames[i], { copy: true, delay: Number(animatedspeedInput.value) });
+				var frameImage = new Image();
+				frameImage.src = selectedFrames[i];
+				await new Promise(function(resolve)
+				{
+					frameImage.onload = resolve;
+				});
+				gif.addFrame(frameImage, { copy: true, delay: Number(animatedspeedInput.value) });
 			}
 			
 			gif.addFrame(lastFrame, { copy: true, delay: Number(animatedrestartDelayInput.value) });
