@@ -300,6 +300,10 @@
 		var frames = [];
 		var previewImage = document.getElementById("previewimage");
 
+		var canvas = document.getElementById("textbox");
+		var ctx = canvas.getContext("2d", { willReadFrequently: true });
+		ctx.imageSmoothingEnabled = false;
+
 		
 		var animatedspeedInput = document.getElementById("animatedspeed");
 		var animatedrestartDelayInput = document.getElementById("animatedrestartdelay");
@@ -345,11 +349,9 @@
 
 				img.onload = function()
 				{
-					var canvas = document.createElement("canvas");
-					canvas.width = 20;
-					canvas.height = 20;
-
-					var ctx = canvas.getContext("2d", { willReadFrequently: true });
+					var canvas2 = document.createElement("canvas");
+					canvas2.width = 20;
+					canvas2.height = 20;
 
 					ctx.imageSmoothingEnabled = true;
 					ctx.drawImage(img, 0, 0, 20, 20);
@@ -362,7 +364,7 @@
 						resolve(result);
 					};
 
-					result.src = canvas.toDataURL("image/png");
+					result.src = canvas2.toDataURL("image/png");
 				};
 
 				img.src = URL.createObjectURL(file);
@@ -551,10 +553,6 @@
 
 		async function rendertextbox(speaker = "none", text = "")
 		{
-			var canvas = document.getElementById("textbox");
-			var ctx = canvas.getContext("2d", { willReadFrequently: true });
-			ctx.imageSmoothingEnabled = false;
-
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 
 			await draw_image(ctx, "Assets/Images/textbox.png", 0, 0, 1, 1, 0, 0, 0);
@@ -590,7 +588,6 @@
 			var canvas = document.getElementById("textbox");
 			frames.push(canvas.toDataURL("image/png"));
 
-			var ctx = canvas.getContext("2d", { willReadFrequently: true });
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 		}
 
