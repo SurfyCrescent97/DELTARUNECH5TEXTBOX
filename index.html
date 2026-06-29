@@ -193,78 +193,93 @@
 
 	<div id="editor">
 		<center>
+			<div id="bannerbox" class="panel">
+				<div id="bannertext"><h1>Surfy's DELTARUNE Chapter 5 Textbox Generator</h1></div>
+			</div>
+			<br>
+			<div id="editorbox" class="panel">
+				<select id="speaker">
+					<optgroup label="Flowers">
+						<option value="aqua">Aqua</option>
+						<option value="seth">Seth</option>
+						<option value="green">Green</option>
+						<option value="orange">Orange</option>
+						<option value="yellow">Yellow</option>
+						<option value="blue">Blue</option>
+					</optgroup>
+					<optgroup label="Misc.">
+						<option value="custom">Custom</option>
+					</optgroup>
+				</select>
+				<div id="customcontrols" style="display:none;">
+					<div style="display:flex; justify-content:center; align-items:center; gap:12px; flex-wrap:wrap;">
+						<label>
+							Color mode:
+							<select id="colormode">
+								<option value="solid">Solid</option>
+								<option value="rainbow">Rainbow</option>
+							</select>
+						</label>
 
-		<div id="bannerbox" class="panel">
-			<div id="bannertext"><h1>Surfy's DELTARUNE Chapter 5 Textbox Generator</h1></div>
-		</div>
-		<br>
-		<div id="editorbox" class="panel">
+						<label id="solidcolorwrap">
+							Color:
+							<input type="color" id="customcolor">
+						</label>
+					</div>
 
-			<select id="speaker">
-				<optgroup label="Flowers">
-					<option value="aqua">Aqua</option>
-					<option value="seth">Seth</option>
-					<option value="green">Green</option>
-					<option value="orange">Orange</option>
-					<option value="yellow">Yellow</option>
-					<option value="blue">Blue</option>
-				</optgroup>
-				<optgroup label="Misc.">
-					<option value="custom">Custom</option>
-				</optgroup>
-			</select>
+					<div style="display:flex; justify-content:center; align-items:center; gap:12px; margin-top:10px;">
+						<label>
+							Icon:
+							<input type="file" id="customicon">
+						</label>
 
-			<br><br>
-
-			<div id="customcontrols" style="display:none;">
+						<button onclick="clearCustomIcon()">Clear Icon</button>
+					</div>
+				</div>
+				<br>
+				<br>
 				<label>
-					Color mode:
-					<select id="colormode">
-						<option value="solid">Solid</option>
-						<option value="rainbow">Rainbow</option>
-					</select>
+					<input type="checkbox" id="isanimated">
+					Animated
 				</label>
-				<label id="solidcolorwrap">
+					<div id="animatedcontrols" style="display:none;">
+						<label>
+							Speed
+							<input type="number" id="animatedspeed" value="50" min="1" style="width:60px;">
+						</label>
+
+						<label style="margin-left:12px;">
+							Restart Delay
+							<input type="number" id="animatedrestartdelay" value="300" min="0" style="width:60px;">
+						</label>
+					</div>
+				<br>
+				<br>
+				<label>
+					Text:
 					<br>
-					<br>
-					Color: <input type="color" id="customcolor">
+					<textarea id="textboxtext" rows="4" cols="60"></textarea>
 				</label>
 				<br>
 				<br>
-				<label>Icon: <input type="file" id="customicon"></label>
-				<button onclick="clearCustomIcon()">Clear Icon</button>
+				<button id="generatebutton" onclick="generate()">Generate</button>
 				<br>
 				<br>
-			</div>
-
-			<label>
-				Text:
+				<div id="previewwrap">
+					<img id="previewimage" alt="Textbox preview">
+				</div>
 				<br>
-				<textarea id="textboxtext" rows="4" cols="60"></textarea>
-			</label>
-			<br>
-			<br>
-			<button id="generatebutton" onclick="generate()">Generate</button>
-			<br>
-			<br>
-			<div id="previewwrap">
-				<img id="previewimage" alt="Textbox preview">
+				<canvas id="textbox" width="594" height="168"></canvas>
+				<button onclick="downloadRESULT()">Download Result</button>
 			</div>
 			<br>
-			<br>
-			<canvas id="textbox" width="594" height="168"></canvas>
-			<br>
-			<button onclick="downloadPNG()">Download PNG</button>
-		</div>
-		<br>
-		<div id="footerbox" class="panel">
-			Copyright © 2026 SurfyCrescent97 (v1.0.0)
-			<br>
-			Based on <a href="https://www.demirramon.com/generators/undertale_text_box_generator">Demirramon's Undertale Textbox Generator</a>
-			<br>
-			DELTARUNE © Toby Fox
-		</div>
-
+			<div id="footerbox" class="panel">
+				Copyright © 2026 SurfyCrescent97 (v1.0.0)
+				<br>
+				Based on <a href="https://www.demirramon.com/generators/undertale_text_box_generator">Demirramon's Undertale Textbox Generator</a>
+				<br>
+				DELTARUNE © Toby Fox
+			</div>
 		</center>	
 	</div>
 
@@ -285,14 +300,22 @@
 		var frames = [];
 		var previewImage = document.getElementById("previewimage");
 
-		function downloadPNG()
+		
+		var animatedspeedInput = document.getElementById("animatedspeed");
+		var animatedrestartDelayInput = document.getElementById("animatedrestartdelay");
+
+		function downloadRESULT()
 		{
-			var canvas = document.getElementById("textbox");
-			var dataUrl = previewImage.src || canvas.toDataURL("image/png");
+			var previewImage = document.getElementById("previewimage");
+
+			if (!previewImage.src)
+				return;
+
+			var format = previewImage.src.match(/image\/([^;]+)/)?.[1] || "png";
 
 			var link = document.createElement("a");
-			link.download = "Surfy's DELTARUNE textbox.png";
-			link.href = dataUrl;
+			link.download = `Surfy's DELTARUNE textbox.${format}`;
+			link.href = previewImage.src;
 			link.click();
 		}
 
@@ -392,7 +415,7 @@
 			});
 		}
 
-		function draw_text(ctx, text, x, y, width, col)
+		async function draw_text(ctx, text, x, y, width, col)
 		{
 			ctx.font = "32px MAINFONT";
 			
@@ -523,41 +546,48 @@
 				}
 			}
 			return output;
-		}
+		}	
 
-		async function rendertextbox(speaker = "none", text="")
+		async function rendertextbox(speaker = "none", text = "")
 		{
-			var canvas = document.getElementById("textbox");
-			var ctx = canvas.getContext("2d");
+			const canvas = document.getElementById("textbox");
+			const ctx = canvas.getContext("2d");
 			ctx.imageSmoothingEnabled = false;
 
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
-			
+
 			await draw_image(ctx, "Assets/Images/textbox.png", 0, 0, 1, 1, 0, 0, 0);
 
-			if (speaker == "custom")
+			let speakerasset = null;
+			let speakercol = null;
+
+			if (speaker === "custom")
 			{
-				var icon = await get_custom_icon();
-				var speakerasset = icon;
-				var speakercol = document.getElementById("customcolor").value;
+				speakerasset = await get_custom_icon();
+				speakercol = document.getElementById("customcolor").value;
 			}
 			else
 			{
-				var speakerasset = `Assets/Images/miniface/${speaker}.png`
-				var speakercol = textcolor(speaker);
+				speakerasset = `Assets/Images/miniface/${speaker}.png`;
+				speakercol = textcolor(speaker);
 			}
 
-			
-			if (speaker != "none" && speakerasset != null)
+			if (speaker !== "none" && speakerasset)
 				await draw_image(ctx, speakerasset, 26, 24, 2, 2, 0);
-			draw_text(ctx, text, 98, 54, 474.45, speakercol, 2);
+
+			const resulttext = await draw_text(ctx, text, 98, 54, 474.45, speakercol, 2);
+
+			return {
+				text: resulttext,
+				asset: speakerasset,
+				col: speakercol
+			};
 		}
 
 		async function add_frame()
 		{
 			var canvas = document.getElementById("textbox");
 			frames.push(canvas.toDataURL("image/png"));
-			set_preview_image(frames[frames.length - 1]);
 
 			var ctx = canvas.getContext("2d");
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -593,6 +623,9 @@
 				height: canvas.height,
 				workerScript: window.location.origin + "/Scripts/gif.worker.js"
 			});
+			
+			var lastFrame = new Image();
+			lastFrame.src  = selectedFrames[selectedFrames.length - 1];
 
 			for (var i = 0; i < selectedFrames.length; i++)
 			{
@@ -602,8 +635,10 @@
 				{
 					frameImage.onload = resolve;
 				});
-				gif.addFrame(frameImage, { copy: true, delay: 200 });
+				gif.addFrame(frameImage, { copy: true, delay: Number(animatedspeedInput.value) });
 			}
+			
+			gif.addFrame(lastFrame, { copy: true, delay: Number(animatedrestartDelayInput.value) });
 
 			var gifDataUrl = await new Promise(function(resolve, reject)
 			{
@@ -625,6 +660,13 @@
 		
 		var speakerSelect = document.getElementById("speaker");
 		var customControls = document.getElementById("customcontrols");
+
+
+		document.getElementById("isanimated").addEventListener("change", function()
+		{
+			document.getElementById("animatedcontrols").style.display = this.checked ? "block" : "none";
+		});
+
 
 		speakerSelect.addEventListener("change", function()
 		{
@@ -651,10 +693,37 @@
 		{
 			clear_frames();
 
+			var animated = document.getElementById("isanimated").checked;
 			var speaker = document.getElementById("speaker").value;
 			var text = document.getElementById("textboxtext").value;
-			await rendertextbox(speaker, text);
-			await add_frame();
+
+			if (animated)
+			{
+				var prerendertext = (await rendertextbox(speaker, text)).text;
+				await rendertextbox(speaker, "");
+				await set_preview_image(document.getElementById("textbox").toDataURL("image/png"));
+
+				let current = "";
+
+				for (var piece of prerendertext)
+				{
+					if (piece === "\n")
+					{
+						current += "\n";
+						continue;
+					}
+
+					current += piece;
+
+					await rendertextbox(speaker, current);
+					await add_frame();
+				}
+			}
+			else
+			{
+				await rendertextbox(speaker, text);
+				await add_frame();
+			}
 			await generate_frames();
 		}
 
@@ -663,5 +732,18 @@
 		{
 			set_preview_image(document.getElementById("textbox").toDataURL("image/png"));
 		});
+
+
+		function validateAnimatedSettings() 
+		{
+			if (isNaN(Number(animatedspeedInput.value)) || animatedspeedInput.value === "")
+				animatedspeedInput.value = 50;
+
+			if (isNaN(Number(animatedrestartDelayInput.value)) || animatedrestartDelayInput.value === "")
+				animatedrestartDelayInput.value = 300;
+		}
+
+		animatedspeedInput.addEventListener("change", validateAnimatedSettings);
+		animatedrestartDelayInput.addEventListener("change", validateAnimatedSettings);
 	</script>
 </html>
