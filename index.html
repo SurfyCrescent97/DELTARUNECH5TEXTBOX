@@ -311,12 +311,9 @@
 		{
 			const textboxImg = await loadImage("Assets/Images/textbox.png");
 
-			const canvas = document.getElementById("textbox");
-			const ctx = canvas.getContext("2d");
+			document.getElementById("textbox").getContext("2d").drawImage(textboxImg, 0, 0);
 
-			ctx.drawImage(textboxImg, 0, 0);
-
-			await set_preview_image(canvas.toDataURL("image/png"));
+			await set_preview_image(document.getElementById("textbox").toDataURL("image/png"));
 		};
 		
 		var animatedspeedInput = document.getElementById("animatedspeed");
