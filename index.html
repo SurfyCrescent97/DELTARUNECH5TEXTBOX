@@ -349,7 +349,10 @@
 					canvas.width = 20;
 					canvas.height = 20;
 
-					var ctx = canvas.getContext("2d");
+					var ctx = canvas.getContext("2d", {
+						willReadFrequently: true
+					});
+					
 					ctx.imageSmoothingEnabled = true;
 					ctx.drawImage(img, 0, 0, 20, 20);
 
@@ -589,7 +592,9 @@
 			var canvas = document.getElementById("textbox");
 			frames.push(canvas.toDataURL("image/png"));
 
-			var ctx = canvas.getContext("2d");
+			var ctx = canvas.getContext("2d", {
+				willReadFrequently: true
+			});
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 		}
 
