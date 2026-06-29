@@ -336,12 +336,10 @@
 			previewImage.style.display = "block";
 		}
 
-		async function get_custom_icon()
+		async function draw_custom_icon(file)
 		{
-			var file = document.getElementById("customicon").files[0];
-
 			if (!file)
-				return Promise.resolve(null);
+				return null;
 
 			return new Promise(function(resolve)
 			{
@@ -349,21 +347,9 @@
 
 				img.onload = function()
 				{
-					var canvas2 = document.createElement("canvas");
-					canvas2.width = 20;
-					canvas2.height = 20;
-
 					ctx.drawImage(img, 26, 24, 20, 20);
-
-					var result = new Image();
-
-					result.onload = function()
-					{
-						URL.revokeObjectURL(img.src);
-						resolve(result);
-					};
-
-					result.src = canvas2.toDataURL("image/png");
+					URL.revokeObjectURL(img.src);
+					resolve(img);
 				};
 
 				img.src = URL.createObjectURL(file);
@@ -561,7 +547,8 @@
 
 			if (speaker === "custom")
 			{
-				speakerasset = await get_custom_icon();
+				var file = document.getElementById("customicon").files[0];
+				await draw_custom_icon(file);
 				speakercol = document.getElementById("customcolor").value;
 			}
 			else
