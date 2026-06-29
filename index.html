@@ -309,11 +309,7 @@
 
 		window.onload = async () =>
 		{
-			const textboxImg = await loadImage("Assets/Images/textbox.png");
-
-			document.getElementById("textbox").getContext("2d").drawImage(textboxImg, 0, 0);
-
-			await set_preview_image(document.getElementById("textbox").toDataURL("image/png"));
+			await set_preview_image("Assets/Images/textbox.png");
 		};
 		
 		var animatedspeedInput = document.getElementById("animatedspeed");
