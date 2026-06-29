@@ -152,7 +152,7 @@
 
 		canvas
 		{
-			display: block;
+			display: none;
 			margin: 0 auto;
 
 			border: 1px solid rgba(255, 255, 255, 0.18);
@@ -161,6 +161,25 @@
 			box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
 			background: rgba(0, 0, 0, 0.12);
 
+			image-rendering: pixelated;
+		}
+
+		#previewwrap
+		{
+			margin: 0 auto 10px;
+			width: min(100%, 594px);
+			display: flex;
+			justify-content: center;
+		}
+
+		#previewimage
+		{
+			display: none;
+			max-width: 100%;
+			border: 1px solid rgba(255, 255, 255, 0.18);
+			border-radius: 8px;
+			box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+			background: rgba(0, 0, 0, 0.12);
 			image-rendering: pixelated;
 		}
 
@@ -228,6 +247,11 @@
 			<button id="generatebutton" onclick="generate()">Generate</button>
 			<br>
 			<br>
+			<div id="previewwrap">
+				<img id="previewimage" alt="Textbox preview">
+			</div>
+			<br>
+			<br>
 			<canvas id="textbox" width="594" height="168"></canvas>
 			<br>
 			<button onclick="downloadPNG()">Download PNG</button>
@@ -245,6 +269,7 @@
 	</div>
 
 	</body>
+	<script src="Scripts/gif.js"></script>
 	<script>
 		var rainbow = [
 			"#FF8A8A", 
@@ -257,14 +282,31 @@
 			"#E2A8FC" 
 		];
 
+		var frames = [];
+		var previewImage = document.getElementById("previewimage");
+
 		function downloadPNG()
 		{
 			var canvas = document.getElementById("textbox");
+			var dataUrl = previewImage.src || canvas.toDataURL("image/png");
 
 			var link = document.createElement("a");
 			link.download = "Surfy's DELTARUNE textbox.png";
-			link.href = canvas.toDataURL("image/png");
+			link.href = dataUrl;
 			link.click();
+		}
+
+		function set_preview_image(src)
+		{
+			if (!src)
+			{
+				previewImage.style.display = "none";
+				previewImage.removeAttribute("src");
+				return;
+			}
+
+			previewImage.src = src;
+			previewImage.style.display = "block";
 		}
 
 		async function get_custom_icon()
@@ -496,6 +538,77 @@
 				await draw_image(ctx, speakerasset, 26, 24, 2, 2, 0);
 			draw_text(ctx, text, 98, 54, 474.45, speakercol, 2);
 		}
+
+		async function add_frame()
+		{
+			var canvas = document.getElementById("textbox");
+			frames.push(canvas.toDataURL("image/png"));
+			set_preview_image(frames[frames.length - 1]);
+
+			var ctx = canvas.getContext("2d");
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+		}
+
+		function clear_frames()
+		{
+			frames = [];
+			set_preview_image(null);
+		}
+
+		async function generate_frames()
+		{
+			var canvas = document.getElementById("textbox");
+			var currentFrame = canvas.toDataURL("image/png");
+			var selectedFrames = frames.length > 0 ? frames : [currentFrame];
+
+			if (selectedFrames.length <= 1)
+			{
+				set_preview_image(selectedFrames[0]);
+				return;
+			}
+
+			if (typeof window.GIF === "undefined")
+			{
+				set_preview_image(selectedFrames[0]);
+				return;
+			}
+
+			var gif = new window.GIF({
+				workers: 2,
+				quality: 10,
+				width: canvas.width,
+				height: canvas.height,
+				workerScript: window.location.origin + "/Scripts/gif.worker.js"
+			});
+
+			for (var i = 0; i < selectedFrames.length; i++)
+			{
+				var frameImage = new Image();
+				frameImage.src = selectedFrames[i];
+				await new Promise(function(resolve)
+				{
+					frameImage.onload = resolve;
+				});
+				gif.addFrame(frameImage, { copy: true, delay: 200 });
+			}
+
+			var gifDataUrl = await new Promise(function(resolve, reject)
+			{
+				gif.on("finished", function(blob)
+				{
+					var reader = new FileReader();
+					reader.onloadend = function()
+					{
+						resolve(reader.result);
+					};
+					reader.onerror = reject;
+					reader.readAsDataURL(blob);
+				});
+				gif.render();
+			});
+
+			set_preview_image(gifDataUrl);
+		}
 		
 		var speakerSelect = document.getElementById("speaker");
 		var customControls = document.getElementById("customcontrols");
@@ -521,14 +634,21 @@
 
 		colorMode.addEventListener("change", updateColorMode);
 		
-		function generate()
+		async function generate()
 		{
+			clear_frames();
+
 			var speaker = document.getElementById("speaker").value;
 			var text = document.getElementById("textboxtext").value;
-			rendertextbox(speaker, text);
+			await rendertextbox(speaker, text);
+			await add_frame();
+			await generate_frames();
 		}
 
 		updateColorMode();
-		rendertextbox();
+		rendertextbox().then(function()
+		{
+			set_preview_image(document.getElementById("textbox").toDataURL("image/png"));
+		});
 	</script>
 </html>
