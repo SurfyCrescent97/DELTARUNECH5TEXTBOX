@@ -284,6 +284,30 @@
 	</div>
 
 	</body>
+	<script>
+		(function ()
+		{
+			var originalGetContext = HTMLCanvasElement.prototype.getContext;
+
+			if (!originalGetContext)
+				return;
+
+			HTMLCanvasElement.prototype.getContext = function(type, options)
+			{
+				if (type === "2d")
+				{
+					var settings = options ? Object.assign({}, options) : {};
+
+					if (settings.willReadFrequently === undefined)
+						settings.willReadFrequently = true;
+
+					return originalGetContext.call(this, type, settings);
+				}
+
+				return originalGetContext.call(this, type, options);
+			};
+		})();
+	</script>
 	<script src="Scripts/gif.js"></script>
 	<script>
 		var rainbow = [
