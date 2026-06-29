@@ -395,7 +395,8 @@
 		function draw_text(ctx, text, x, y, width, col)
 		{
 			ctx.font = "32px MAINFONT";
-
+			
+			var output = "";
 			var lineHeight = 36;
 			var letterSpacing = 2;
 			var extraspacing = 8;
@@ -475,7 +476,12 @@
 
 					if (measureLine(testLine) > width && line !== "")
 					{
-						drawLine(line.replace(/\s+$/, ""), x, currentY);
+						var finalLine = line.replace(/\s+$/, "");
+						drawLine(finalLine, x, currentY);
+
+						if (output !== "")
+							output += "\n";
+						output += finalLine;
 						currentY += lineHeight;
 						line = token.replace(/^\s+/, "");
 						continue;
@@ -490,6 +496,9 @@
 							if (measureLine(test) > width && line !== "")
 							{
 								drawLine(line, x, currentY);
+								if (output !== "")
+									output += "\n";
+								output += line;
 								currentY += lineHeight;
 								line = "";
 							}
@@ -506,9 +515,14 @@
 				if (line !== "")
 				{
 					drawLine(line, x, currentY);
+
+					if (output !== "")
+						output += "\n";
+					output += line;
 					currentY += lineHeight;
 				}
 			}
+			return output;
 		}
 
 		async function rendertextbox(speaker = "none", text="")
@@ -552,7 +566,6 @@
 		function clear_frames()
 		{
 			frames = [];
-			set_preview_image(null);
 		}
 
 		async function generate_frames()
