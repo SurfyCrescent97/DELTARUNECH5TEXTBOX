@@ -571,7 +571,6 @@
 
 		async function add_frame()
 		{
-			var canvas = document.getElementById("textbox");
 			frames.push(canvas.toDataURL("image/png"));
 
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -584,7 +583,6 @@
 
 		async function generate_frames()
 		{
-			var canvas = document.getElementById("textbox");
 			var currentFrame = canvas.toDataURL("image/png");
 			var selectedFrames = frames.length > 0 ? frames : [currentFrame];
 
