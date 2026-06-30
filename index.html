@@ -208,9 +208,31 @@
 						<option value="blue">Blue</option>
 					</optgroup>
 					<optgroup label="Misc.">
+						<option value="pink">Pink</option>
 						<option value="custom">Custom</option>
 					</optgroup>
 				</select>
+				<div id="pinkcontrols" style="display:none;">
+					<br>
+					<input type="checkbox" id="pinkcoralpink">
+					Coral Pink? 
+					<br>
+					<label>
+						Expression:
+						<select id="pinkexpression">
+							<option value="happy">Happy</option>
+							<option value="wink">Wink</option>
+							<option value="nya">Nya</option>
+							<option value="nya2">Nya 2</option>
+							<option value="tongue">Tongue</option>
+							<option value="concerned">Concerned</option>
+							<option value="angry">Angry</option>
+							<option value="sadblush">Sad Blush</option>
+							<option value="angryblush">Angry Blush</option>
+							<option value="shocked">Shocked</option>
+						</select>
+					</label>
+				</div>
 				<div id="customcontrols" style="display:none;">
 					<div style="display:flex; justify-content:center; align-items:center; gap:12px; flex-wrap:wrap;">
 						<label>
@@ -244,12 +266,12 @@
 				</label>
 					<div id="animatedcontrols" style="display:none;">
 						<label>
-							Speed
-							<input type="number" id="animatedspeed" value="50" min="1" style="width:60px;">
+							Delay (ms)
+							<input type="number" id="animateddelay" value="50" min="1" style="width:60px;">
 						</label>
 
 						<label style="margin-left:12px;">
-							Restart Delay
+							Restart Delay (ms)
 							<input type="number" id="animatedrestartdelay" value="300" min="0" style="width:60px;">
 						</label>
 					</div>
@@ -285,6 +307,7 @@
 
 	</body>
 	<script src="Scripts/gif.js"></script>
+	<script src="Scripts/gifuct.bundle.js"></script>
 	<script>
 		var rainbow = [
 			"#FF8A8A", 
@@ -299,12 +322,15 @@
 
 		var frames = [];
 		var previewImage = document.getElementById("previewimage");
+		var pinkshake = [];
+		var pinkspr = "happy.gif";
+		var pinktail = false;
+		var pinkindex = 0;
+		var pinkoffsetx = 0;
 
 		window.addEventListener("DOMContentLoaded", async () => {
 			window.canvas = document.getElementById("textbox");
 			window.ctx = canvas.getContext("2d", { willReadFrequently: true });
-
-			
 		});
 
 		window.onload = async () =>
@@ -312,8 +338,13 @@
 			await set_preview_image("Assets/Images/textbox.png");
 		};
 		
-		var animatedspeedInput = document.getElementById("animatedspeed");
+		var animateddelayInput = document.getElementById("animateddelay");
 		var animatedrestartDelayInput = document.getElementById("animatedrestartdelay");
+
+		function getFileExtension(path)
+		{
+			return path.split(".").pop().toLowerCase();
+		}
 
 		function downloadRESULT()
 		{
@@ -371,45 +402,102 @@
 				yellow: "#FFF8A1",
 				orange: "#FFAC87",
 				blue: "#86A7FF",
-				green: "#AEFFBC"
+				green: "#AEFFBC",
+				pink: "#F88379"
 			};
 
 			return colors[speaker] || "#FFFFFF";
+		}	
+
+		function gifFrameToPNGUrl(path, frameIndex)
+		{
+			return fetch(path)
+				.then(function(res)
+				{
+					return res.arrayBuffer();
+				})
+				.then(function(buffer)
+				{
+					var gif = gifuct.parseGIF(buffer);
+					var frames = gifuct.decompressFrames(gif, true);
+					var frame = frames[Math.max(0, Math.min(Number(frameIndex), frames.length - 1))] || frames[0];
+					
+					var tempSurface = document.createElement("canvas");
+					tempSurface.width = gif.lsd.width;
+					tempSurface.height = gif.lsd.height;
+
+					var tempctx = tempSurface.getContext("2d");
+					tempctx.clearRect(0, 0, tempSurface.width, tempSurface.height);
+					var imageData = new ImageData(new Uint8ClampedArray(frame.patch), frame.dims.width, frame.dims.height);
+					tempctx.putImageData(imageData, frame.dims.left, frame.dims.top);
+
+					return new Promise(function(resolve, reject)
+					{
+						tempSurface.toBlob(function(blob)
+						{
+							if (!blob)
+							{
+								reject(new Error("Failed to encode GIF frame"));
+								return;
+							}
+
+							var url = URL.createObjectURL(blob);
+							resolve(url);
+						}, "image/png");
+					});
+				});
 		}
-		
+
 		function draw_image(thectx, path, x, y, xscale = 1, yscale = 1, originx = 0, originy = 0, frame = 0)
 		{
 			return new Promise(function(resolve)
 			{
-				var source = Array.isArray(path) ? path[frame % path.length] : path;
+				var isgif = getFileExtension(path) == "gif";
+				var source;
 
-				if (!source)
+				function draw(src)
 				{
-					resolve();
+					if (!src)
+					{
+						resolve();
+						return;
+					}
+
+					if (src instanceof Image)
+					{
+						thectx.drawImage(src, x - originx * xscale, y - originy * yscale, src.width * xscale, src.height * yscale);
+
+						resolve();
+						return;
+					}
+
+					var image = new Image();
+
+					image.onload = function()
+					{
+						thectx.drawImage(image, x - originx * xscale, y - originy * yscale, image.width * xscale, image.height * yscale);
+
+						resolve();
+					};
+
+					image.src = src;
+				}
+
+				if (isgif)
+				{
+					gifFrameToPNGUrl(path, frame).then(function(url)
+					{
+						draw(url);
+					});
+
 					return;
 				}
 
-				if (source instanceof Image)
-				{
-					thectx.drawImage(source, x - originx * xscale, y - originy * yscale, source.width * xscale, source.height * yscale);
+				source = Array.isArray(path) ? path[frame % path.length] : path;
 
-					resolve();
-					return;
-				}
-
-				var image = new Image();
-
-				image.onload = function()
-				{
-					thectx.drawImage(image, x - originx * xscale, y - originy * yscale, image.width * xscale, image.height * yscale);
-
-					resolve();
-				};
-
-				image.src = source;
+				draw(source);
 			});
 		}
-
 		async function draw_text(thectx, text, x, y, width, col)
 		{
 			thectx.font = "32px MAINFONT";
@@ -546,28 +634,69 @@
 		async function rendertextbox(speaker = "none", text = "")
 		{
 			window.ctx.clearRect(0, 0, window.canvas.width, window.canvas.height);
-
-			await draw_image(window.ctx, "Assets/Images/textbox.png", 0, 0, 1, 1, 0, 0, 0);
+			window.canvas.width = 594;
+			window.canvas.height = 168;
 
 			let speakerasset = null;
 			let speakercol = null;
 
+			let textx = 98;
+			let texty = 54;
+			let textwidth = 474.45;
+			let textboxoffsety = 0;
+
 			if (speaker === "custom")
 			{
-				var file = document.getElementById("customicon").files[0];
-				await draw_custom_icon(file);
 				speakercol = document.getElementById("customcolor").value;
 			}
-			else
+			else if (speaker == "pink")
+			{
+				speakercol = document.getElementById("pinkcoralpink").checked ? textcolor(speaker) : "#FFFFFF";
+				
+				if (text.charAt(0) != "*")
+					text = "* " + text;
+				window.canvas.width = 620;
+				window.canvas.height = 230;
+				if (pinkspr == "shocked.png")
+					window.canvas.width = 640;
+				textx = 36;
+				textboxoffsety = 63;
+				textwidth = 380;
+			}
+			else 
 			{
 				speakerasset = `Assets/Images/miniface/${speaker}.png`;
 				speakercol = textcolor(speaker);
 			}
 
-			if (speaker !== "none" && speakerasset)
-				await draw_image(window.ctx, speakerasset, 26, 24, 2, 2, 0);
+			await draw_image(window.ctx, "Assets/Images/textbox.png", 0, textboxoffsety, 1, 1, 0, 0, 0);
 
-			const resulttext = await draw_text(window.ctx, text, 98, 54, 474.45, speakercol, 2);
+			if (speaker == "pink" && pinkspr)
+			{
+				await draw_image(window.ctx, `Assets/Images/pinkspeaker/${pinkspr}`, 392 + 116 + pinkoffsetx, 116, 2, 2, 56, 58, pinkindex);
+				if (pinktail)
+					await draw_image(window.ctx, `Assets/Images/pinkspeaker/tail.png`, 392 + 116 + pinkoffsetx, 116, 2, 2, 56, 58, pinkindex);
+			}
+			else if (speaker === "custom")
+				await draw_custom_icon(file);
+			else if (speaker !== "none" && speakerasset)
+				await draw_image(window.ctx, speakerasset, 26, 24 + textboxoffsety, 2, 2, 0);
+
+			switch (pinkspr)
+			{
+				case "happy.gif":
+				case "wink.gif":
+				case "nya.gif":
+				case "nya2.gif":
+				case "concerned.gif":
+				case "angry.gif":
+				case "sadblush.gif":
+				case "angryblush.gif":
+					pinkindex = pinkindex == 1 ? 0 : 1;
+					break;
+			}
+
+			const resulttext = await draw_text(window.ctx, text, textx, texty + textboxoffsety, textwidth, speakercol, 2);
 
 			return {
 				text: resulttext,
@@ -624,7 +753,7 @@
 				{
 					frameImage.onload = resolve;
 				});
-				gif.addFrame(frameImage, { copy: true, delay: Number(animatedspeedInput.value) });
+				gif.addFrame(frameImage, { copy: true, delay: Number(animateddelayInput.value) });
 			}
 			
 			gif.addFrame(lastFrame, { copy: true, delay: Number(animatedrestartDelayInput.value) });
@@ -647,9 +776,6 @@
 			set_preview_image(gifDataUrl);
 		}
 		
-		var speakerSelect = document.getElementById("speaker");
-		var customControls = document.getElementById("customcontrols");
-
 
 		document.getElementById("isanimated").addEventListener("change", function()
 		{
@@ -657,9 +783,23 @@
 		});
 
 
-		speakerSelect.addEventListener("change", function()
+		document.getElementById("speaker").addEventListener("change", function()
 		{
-			customControls.style.display = this.value === "custom" ? "block" : "none";
+			document.getElementById("customcontrols").style.display = "none";
+			document.getElementById("pinkcontrols").style.display = "none";
+			switch (this.value)
+			{
+				case "custom":
+					document.getElementById("customcontrols").style.display = "block";
+					break;
+
+				case "pink":
+					document.getElementById("pinkcontrols").style.display = "block";
+					break;
+
+				default:
+					break;
+			}
 		});
 
 		function clearCustomIcon()
@@ -681,6 +821,48 @@
 		async function generate()
 		{
 			clear_frames();
+			pinkshake = [];
+			pinkindex = 0;
+			pinktail = false;
+			pinkoffsetx = 0;
+
+			switch (document.getElementById("pinkexpression").value)
+			{
+				case "happy":
+					pinkspr = "happy.gif";
+					pinktail = true;
+					break;
+				case "wink":
+					pinkspr = "wink.gif";
+					pinktail = true;
+					break;
+				case "nya":
+					pinkspr = "nya.gif";
+					break;
+				case "nya2":
+					pinkspr = "nya2.gif";
+					break;
+				case "tongue":
+					pinkspr = "tongue.png";
+					break;
+				case "concerned":
+					pinkspr = "concerned.gif";
+					pinktail = true;
+					break;
+				case "angry":
+					pinkspr = "angry.gif";
+					break;
+				case "sadblush":
+					pinkspr = "sadblush.gif";
+					break;
+				case "angryblush":
+					pinkspr = "angryblush.gif";
+					break;
+				case "shocked":
+					pinkspr = "shocked.png";
+					pinkshake = [0, 6, -6, 4, -4, 2, -2, 0];
+					break;
+			}
 
 			var animated = document.getElementById("isanimated").checked;
 			var speaker = document.getElementById("speaker").value;
@@ -694,6 +876,8 @@
 
 				let current = "";
 
+				var shakeindex = 0;
+
 				for (var piece of prerendertext)
 				{
 					if (piece === "\n")
@@ -702,11 +886,49 @@
 						continue;
 					}
 
+					if (speaker == "pink")
+					{
+						pinkoffsetx = pinkshake[shakeindex] ?? 0;
+						shakeindex++;
+					}
+
 					current += piece;
 
 					await rendertextbox(speaker, current);
 					await add_frame();
 				}
+
+				if (speaker == "pink")
+				{
+					while (shakeindex < pinkshake.length)
+					{
+						pinkoffsetx = pinkshake[shakeindex];
+						shakeindex++;
+
+						await rendertextbox(speaker, current);
+						await add_frame();
+					}
+				}
+
+				if (speaker == "pink")
+				{
+					switch (pinkspr)
+					{
+						case "happy.gif":
+						case "wink.gif":
+						case "nya.gif":
+						case "nya2.gif":
+						case "concerned.gif":
+						case "angry.gif":
+						case "sadblush.gif":
+						case "angryblush.gif":
+							pinkindex = 0;
+							await rendertextbox(speaker, current);
+							await add_frame();
+							break;
+					}
+				}
+
 			}
 			else
 			{
@@ -720,14 +942,14 @@
 
 		function validateAnimatedSettings() 
 		{
-			if (isNaN(Number(animatedspeedInput.value)) || animatedspeedInput.value === "")
-				animatedspeedInput.value = 50;
+			if (isNaN(Number(animateddelayInput.value)) || animateddelayInput.value === "")
+				animateddelayInput.value = 50;
 
 			if (isNaN(Number(animatedrestartDelayInput.value)) || animatedrestartDelayInput.value === "")
 				animatedrestartDelayInput.value = 300;
 		}
 
-		animatedspeedInput.addEventListener("change", validateAnimatedSettings);
+		animateddelayInput.addEventListener("change", validateAnimatedSettings);
 		animatedrestartDelayInput.addEventListener("change", validateAnimatedSettings);
 	</script>
 </html>
