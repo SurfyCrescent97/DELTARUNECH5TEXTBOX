@@ -206,12 +206,19 @@
 						<option value="orange">Orange</option>
 						<option value="yellow">Yellow</option>
 						<option value="blue">Blue</option>
+						<option value="flowery">Flowery</option>
 					</optgroup>
 					<optgroup label="Misc.">
 						<option value="pink">Pink</option>
 						<option value="custom">Custom</option>
 					</optgroup>
 				</select>
+				<div id="flowerycontrols" style="display:none;">
+					<br>
+					Expression:
+					<input type="number" id="floweryexpression" value="1" min="1" max="35" style="width:3.5em;">
+					<img draggable=false id="floweryexpressionpreview" src="Assets/Images/face/flowery1.png" style="width:37px;height:48px;vertical-align:middle;margin-left:4px;image-rendering:pixelated;">
+				</div>
 				<div id="pinkcontrols" style="display:none;">
 					<br>
 					<input type="checkbox" id="pinkcoralpink">
@@ -403,7 +410,8 @@
 				orange: "#FFAC87",
 				blue: "#86A7FF",
 				green: "#AEFFBC",
-				pink: "#F88379"
+				pink: "#F88379",
+				flowery: "#FFFFFF"
 			};
 
 			return colors[speaker] || "#FFFFFF";
@@ -633,6 +641,7 @@
 
 		async function rendertextbox(speaker = "none", text = "")
 		{
+			
 			window.ctx.clearRect(0, 0, window.canvas.width, window.canvas.height);
 			window.canvas.width = 594;
 			window.canvas.height = 168;
@@ -644,6 +653,8 @@
 			let texty = 54;
 			let textwidth = 474.45;
 			let textboxoffsety = 0;
+
+			let file = document.getElementById("customicon").files[0];
 
 			if (speaker === "custom")
 			{
@@ -663,6 +674,14 @@
 				textboxoffsety = 63;
 				textwidth = 380;
 			}
+			else if (speaker == "flowery")
+			{
+				if (text.charAt(0) != "*")
+					text = "* " + text;
+				textx = 149.999;
+				speakerasset = `Assets/Images/face/${speaker}${String(document.getElementById("floweryexpression").value)}.png`;
+				speakercol = textcolor(speaker);
+			}
 			else 
 			{
 				speakerasset = `Assets/Images/miniface/${speaker}.png`;
@@ -671,16 +690,18 @@
 
 			await draw_image(window.ctx, "Assets/Images/textbox.png", 0, textboxoffsety, 1, 1, 0, 0, 0);
 
-			if (speaker == "pink" && pinkspr)
+			if (speaker === "pink" && pinkspr)
 			{
 				await draw_image(window.ctx, `Assets/Images/pinkspeaker/${pinkspr}`, 392 + 116 + pinkoffsetx, 116, 2, 2, 56, 58, pinkindex);
 				if (pinktail)
 					await draw_image(window.ctx, `Assets/Images/pinkspeaker/tail.png`, 392 + 116 + pinkoffsetx, 116, 2, 2, 56, 58, pinkindex);
 			}
+			else if (speaker === "flowery")
+				await draw_image(window.ctx, speakerasset, 44, 36 + textboxoffsety, 2, 2);
 			else if (speaker === "custom")
 				await draw_custom_icon(file);
 			else if (speaker !== "none" && speakerasset)
-				await draw_image(window.ctx, speakerasset, 26, 24 + textboxoffsety, 2, 2, 0);
+				await draw_image(window.ctx, speakerasset, 26, 24 + textboxoffsety, 2, 2);
 
 			switch (pinkspr)
 			{
@@ -787,6 +808,7 @@
 		{
 			document.getElementById("customcontrols").style.display = "none";
 			document.getElementById("pinkcontrols").style.display = "none";
+			document.getElementById("flowerycontrols").style.display = "none";
 			switch (this.value)
 			{
 				case "custom":
@@ -796,6 +818,10 @@
 				case "pink":
 					document.getElementById("pinkcontrols").style.display = "block";
 					break;
+				
+				case "flowery":
+					document.getElementById("flowerycontrols").style.display = "block";
+					break
 
 				default:
 					break;
@@ -949,6 +975,12 @@
 				animatedrestartDelayInput.value = 300;
 		}
 
+		function updateflowerypreviewexpression()
+		{
+			document.getElementById("floweryexpressionpreview").src = `Assets/Images/face/flowery${String(document.getElementById("floweryexpression").value)}.png`;
+		}
+
+		floweryexpression.addEventListener("change", updateflowerypreviewexpression);
 		animateddelayInput.addEventListener("change", validateAnimatedSettings);
 		animatedrestartDelayInput.addEventListener("change", validateAnimatedSettings);
 	</script>
