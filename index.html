@@ -210,7 +210,7 @@
 					</optgroup>
 					<optgroup label="Pink">
 						<option value="pink">Pink</option>
-						<option value="ghostpink">Ghost Pink</option>
+						<option value="pinkghost">Pink Ghost</option>
 					</optgroup>
 					<optgroup label="Misc.">
 						<option value="custom">Custom</option>
@@ -245,19 +245,20 @@
 					</label>
 				</div>
 
-				<div id="ghostpinkcontrols" style="display:none;">
+				<div id="pinkghostcontrols" style="display:none;">
 					<br>
-					<input type="checkbox" id="ghostpinkcoralpink">
+					<input type="checkbox" id="pinkghostcoralpink">
 					Coral Pink Text? 
 					<br>
 					<label>
 						Expression:
-						<select id="ghostpinkexpression">
+						<select id="pinkghostexpression">
 							<option value="nya">Nya</option>
 							<option value="nya2">Nya 2</option>
 							<option value="blush">Blush</option>
 							<option value="concerned">Concerned</option>
 							<option value="sad">Sad</option>
+							<option value="angry">Angry</option>
 							<option value="yell">Yell</option>
 							<option value="shock">Shock</option>
 						</select>
@@ -360,12 +361,12 @@
 		var pinkoffsetx = 0;
 		var pinkoffsety = 0;
 
-		var ghostpinkshake = [];
-		var ghostpinkspr = "nya.gif";
-		var ghostpinktail = false;
-		var ghostpinkindex = 0;
-		var ghostpinkoffsetx = 0;
-		var ghostpinkoffsety = 0;
+		var pinkghostshake = [];
+		var pinkghostspr = "nya.gif";
+		var pinkghosttail = false;
+		var pinkghostindex = 0;
+		var pinkghostoffsetx = 0;
+		var pinkghostoffsety = 0;
 
 		window.addEventListener("DOMContentLoaded", async () => {
 			window.canvas = document.getElementById("textbox");
@@ -444,7 +445,7 @@
 				blue: "#86A7FF",
 				green: "#AEFFBC",
 				pink: "#F88379",
-				ghostpink: "#F88379",
+				pinkghost: "#F88379",
 				flowery: "#FFFFFF"
 			};
 
@@ -694,11 +695,11 @@
 			{
 				speakercol = document.getElementById("customcolor").value;
 			}
-			else if (speaker == "pink" || speaker == "ghostpink")
+			else if (speaker == "pink" || speaker == "pinkghost")
 			{
 				var speakercolpinkval = "pinkcoralpink";
-				if (speaker == "ghostpink")
-					speakercolpinkval = "ghostpinkcoralpink";
+				if (speaker == "pinkghost")
+					speakercolpinkval = "pinkghostcoralpink";
 
 				speakercol = document.getElementById(speakercolpinkval).checked ? textcolor(speaker) : "#FFFFFF";
 				
@@ -706,12 +707,12 @@
 					text = "* " + text;
 				window.canvas.width = 620;
 				window.canvas.height = 230;
-				if ((pinkspr == "shocked.png" && speaker == "pink") || (ghostpinkspr == "shocked.png" && speaker == "ghostpink"))
+				if ((pinkspr == "shocked.png" && speaker == "pink") || (pinkghostspr == "shocked.png" && speaker == "pinkghost"))
 					window.canvas.width = 640;
-				if (ghostpinkspr == "yell.gif" && speaker == "ghostpink")
-					ghostpinkoffsety = -30;
+				if (pinkghostspr == "yell.gif" && speaker == "pinkghost")
+					pinkghostoffsety = -30;
 				else
-					ghostpinkoffsety = 0;
+					pinkghostoffsety = 0;
 				textx = 36;
 				textboxoffsety = 63;
 				textwidth = 380;
@@ -740,11 +741,11 @@
 				if (pinktail)
 					await draw_image(window.ctx, `Assets/Images/pinkspeaker/tail.png`, 392 + 116 + pinkoffsetx, 116 + pinkoffsety, 2, 2, 56, 58, 0);
 			}
-			else if (speaker === "ghostpink" && ghostpinkspr)
+			else if (speaker === "pinkghost" && pinkghostspr)
 			{
-				await draw_image(window.ctx, `Assets/Images/pinkghost/${ghostpinkspr}`, 392 + 116 + ghostpinkoffsetx, 116 + ghostpinkoffsety, 2, 2, 56, 58, ghostpinkindex);
-				if (ghostpinktail)
-					await draw_image(window.ctx, `Assets/Images/pinkghost/tail.png`, 392 + 116 + ghostpinkoffsetx, 116 + ghostpinkoffsety, 2, 2, 56, 58, 0);
+				await draw_image(window.ctx, `Assets/Images/pinkghost/${pinkghostspr}`, 392 + 116 + pinkghostoffsetx, 116 + pinkghostoffsety, 2, 2, 56, 58, pinkghostindex);
+				if (pinkghosttail)
+					await draw_image(window.ctx, `Assets/Images/pinkghost/tail.png`, 392 + 116 + pinkghostoffsetx, 116 + pinkghostoffsety, 2, 2, 56, 58, 0);
 			}
 			else if (speaker === "flowery")
 				await draw_image(window.ctx, speakerasset, 44, 36 + textboxoffsety, 2, 2);
@@ -767,15 +768,16 @@
 					break;
 			}
 
-			switch (ghostpinkspr)
+			switch (pinkghostspr)
 			{
 				case "nya.gif":
 				case "nya2.gif":
 				case "blush.gif":
 				case "concerned.gif":
 				case "sad.gif":
+				case "angry.gif":
 				case "yell.gif":
-					ghostpinkindex = ghostpinkindex == 1 ? 0 : 1;
+					pinkghostindex = pinkghostindex == 1 ? 0 : 1;
 					break;
 			}
 
@@ -870,7 +872,7 @@
 		{
 			document.getElementById("customcontrols").style.display = "none";
 			document.getElementById("pinkcontrols").style.display = "none";
-			document.getElementById("ghostpinkcontrols").style.display = "none";
+			document.getElementById("pinkghostcontrols").style.display = "none";
 			document.getElementById("flowerycontrols").style.display = "none";
 			switch (this.value)
 			{
@@ -882,8 +884,8 @@
 					document.getElementById("pinkcontrols").style.display = "block";
 					break;
 
-				case "ghostpink":
-					document.getElementById("ghostpinkcontrols").style.display = "block";
+				case "pinkghost":
+					document.getElementById("pinkghostcontrols").style.display = "block";
 					break;
 				
 				case "flowery":
@@ -915,15 +917,15 @@
 		{
 			clear_frames();
 			pinkshake = [];
-			ghostpinkshake = [];
+			pinkghostshake = [];
 			pinkindex = 0;
-			ghostpinkindex = 0;
+			pinkghostindex = 0;
 			pinktail = false;
-			ghostpinktail = false;
+			pinkghosttail = false;
 			pinkoffsetx = 0;
-			ghostpinkoffsetx = 0;
+			pinkghostoffsetx = 0;
 			pinkoffsety = 0;
-			ghostpinkoffsety = 0;
+			pinkghostoffsety = 0;
 
 			switch (document.getElementById("pinkexpression").value)
 			{
@@ -963,31 +965,34 @@
 					break;
 			}
 
-			switch (document.getElementById("ghostpinkexpression").value)
+			switch (document.getElementById("pinkghostexpression").value)
 			{
 				case "nya":
-					ghostpinkspr = "nya.gif";
+					pinkghostspr = "nya.gif";
 					break;
 				case "nya2":
-					ghostpinkspr = "nya2.gif";
+					pinkghostspr = "nya2.gif";
 					break;
 				case "blush":
-					ghostpinkspr = "blush.gif";
-					ghostpinktail = true;
+					pinkghostspr = "blush.gif";
+					pinkghosttail = true;
 					break;
 				case "concerned":
-					ghostpinkspr = "concerned.gif";
-					ghostpinktail = true;
+					pinkghostspr = "concerned.gif";
+					pinkghosttail = true;
 					break;
 				case "sad":
-					ghostpinkspr = "sad.gif";
+					pinkghostspr = "sad.gif";
+					break;
+				case "angry":
+					pinkghostspr = "angry.gif";
 					break;
 				case "yell":
-					ghostpinkspr = "yell.gif";
+					pinkghostspr = "yell.gif";
 					break;
 				case "shock":
-					ghostpinkspr = "shock.png";
-					ghostpinkshake = [0, 6, -6, 4, -4, 2, -2, 0];
+					pinkghostspr = "shock.png";
+					pinkghostshake = [0, 6, -6, 4, -4, 2, -2, 0];
 					break;
 			}
 
@@ -1019,9 +1024,9 @@
 						shakeindex++;
 					}
 
-					if (speaker == "ghostpink")
+					if (speaker == "pinkghost")
 					{
-						ghostpinkoffsetx = ghostpinkshake[shakeindex] ?? 0;
+						pinkghostoffsetx = pinkghostshake[shakeindex] ?? 0;
 						shakeindex++;
 					}
 					
@@ -1043,11 +1048,11 @@
 					}
 				}
 
-				if (speaker == "ghostpink")
+				if (speaker == "pinkghost")
 				{
-					while (shakeindex < ghostpinkshake.length)
+					while (shakeindex < pinkghostshake.length)
 					{
-						ghostpinkoffsetx = ghostpinkshake[shakeindex];
+						pinkghostoffsetx = pinkghostshake[shakeindex];
 						shakeindex++;
 
 						await rendertextbox(speaker, current);
@@ -1074,7 +1079,7 @@
 					}
 				}
 
-				if (speaker == "ghostpink")
+				if (speaker == "pinkghost")
 				{
 					switch (pinkspr)
 					{
@@ -1083,8 +1088,9 @@
 						case "blush.gif":
 						case "concerned.gif":
 						case "sad.gif":
+						case "angry.gif":
 						case "yell.gif":
-							ghostpinkindex = 0;
+							pinkghostindex = 0;
 							await rendertextbox(speaker, current);
 							await add_frame();
 							break;
